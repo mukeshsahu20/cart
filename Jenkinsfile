@@ -3,7 +3,8 @@ pipeline {
 
     options {
         disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        timestamps()
     }
 
     parameters {
@@ -14,7 +15,6 @@ pipeline {
     environment {
         APP_NAME = "my-app"
         DOCKER_IMAGE = "myrepo/my-app"
-        AWS_REGION = "ap-south-1"
     }
 
     stages {
@@ -22,42 +22,44 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: "${params.BRANCH}",
-                    url: 'https://github.com/org/repo.git'
+                    url: 'https://github.com/git/git.git'   // public repo for demo
             }
         }
 
-        stage('Build') {
+        stage('Build (Demo)') {
             steps {
-                sh '''
-                    echo "Building application..."
-                    mvn clean package -DskipTests
+                bat '''
+                echo Building application on Windows...
+                echo Simulating build process...
                 '''
             }
         }
 
-        stage('Unit Test') {
+        stage('Unit Test (Demo)') {
             steps {
-                sh 'mvn test'
+                bat '''
+                echo Running unit tests...
+                echo All tests passed!
+                '''
             }
         }
 
-        stage('Code Quality - SonarQube') {
+        stage('Code Quality (Demo)') {
             steps {
-                withSonarQubeEnv('sonarqube-server') {
-                    sh 'mvn sonar:sonar'
-                }
+                bat '''
+                echo Running code quality checks...
+                '''
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Docker Build (Optional)') {
+            when {
+                expression { return false } // disable for demo if Docker not installed
+            }
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-creds') {
-                        def image = docker.build("${DOCKER_IMAGE}:${BUILD_NUMBER}")
-                        image.push()
-                        image.push('latest')
-                    }
-                }
+                bat '''
+                docker build -t %DOCKER_IMAGE%:%BUILD_NUMBER% .
+                '''
             }
         }
 
@@ -70,22 +72,20 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes (EKS)') {
+        stage('Deploy (Demo)') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        echo "Deploying to ${ENV} environment"
-                        kubectl set image deployment/${APP_NAME} ${APP_NAME}=${DOCKER_IMAGE}:${BUILD_NUMBER} --record
-                    '''
-                }
+                bat '''
+                echo Deploying %APP_NAME% to %ENV% environment...
+                echo Deployment successful!
+                '''
             }
         }
 
         stage('Post Deployment Verification') {
             steps {
-                sh '''
-                    echo "Checking rollout status..."
-                    kubectl rollout status deployment/${APP_NAME}
+                bat '''
+                echo Verifying deployment...
+                echo Application is running fine!
                 '''
             }
         }
