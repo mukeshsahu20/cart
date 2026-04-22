@@ -1,12 +1,6 @@
 pipeline {
     agent any
 
-    options {
-        disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timestamps()
-    }
-
     parameters {
         choice(name: 'ENV', choices: ['dev', 'uat', 'prod'], description: 'Select Environment')
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git Branch')
