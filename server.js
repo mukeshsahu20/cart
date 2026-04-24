@@ -14,6 +14,7 @@ const counter = new promClient.Counter({
     registers: [register]
 });
 
+#
 
 var redisConnected = false;
 
